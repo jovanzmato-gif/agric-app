@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AgriLink Uganda</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="index.css">
+</head>
+<body>
+
+<div class="phone">
+  <!-- App bar -->
+  <div class="appbar">
+    <div class="appbar-top">
+      <div class="logo-mark">🌾</div>
+      <div>
+        <div class="appbar-title">AgriLink Uganda</div>
+        <div class="appbar-sub">Connecting farmers directly to buyers</div>
+      </div>
+    </div>
+    <div class="ticker-wrap">
+      <div class="ticker-track" id="tickerTrack"></div>
+    </div>
+  </div>
+
+  <!-- Home screen -->
+  <div class="screen" id="screen-home">
+    <div class="hero-card">
+      <div class="hero-eyebrow">Today on the market</div>
+      <div class="hero-title">Sell your harvest.<br><span>Skip the middleman.</span></div>
+      <div class="hero-tag">Farmers list crops. Buyers find them. Everyone talks directly.</div>
+      <div class="role-row">
+        <button class="role-btn farmer" onclick="goTo('farmer')">
+          <span class="emoji">👨‍🌾</span> I'm a Farmer
+        </button>
+        <button class="role-btn buyer" onclick="goTo('search')">
+          <span class="emoji">🛒</span> I'm a Buyer
+        </button>
+      </div>
+    </div>
+
+    <div class="stat-strip">
+      <div class="stat-box"><div class="stat-num" id="statListings">2</div><div class="stat-label">Listings</div></div>
+      <div class="stat-box"><div class="stat-num" id="statSales">3</div><div class="stat-label">Sales logged</div></div>
+      <div class="stat-box"><div class="stat-num">4</div><div class="stat-label">Crops tracked</div></div>
+    </div>
+
+    <div class="section-label">Newest listings <a onclick="goTo('search')">See all →</a></div>
+    <div id="homeListings"></div>
+  </div>
+
+  <!-- Farmer screen -->
+  <div class="screen hidden" id="screen-farmer">
+    <h1 class="page-title">👨‍🌾 List a Product</h1>
+    <p class="page-desc">Add your crop to the market. Buyers nearby will be able to find and contact you directly.</p>
+
+    <div class="form-group">
+      <label for="f-crop">Crop</label>
+      <select id="f-crop">
+        <option value="Maize">Maize</option>
+        <option value="Beans">Beans</option>
+        <option value="Coffee">Coffee</option>
+        <option value="Tomatoes">Tomatoes</option>
+        <option value="Bananas (Matooke)">Bananas (Matooke)</option>
+        <option value="Cassava">Cassava</option>
+        <option value="Other">Other</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="f-qty">Quantity (kg)</label>
+      <input id="f-qty" type="number" min="1" placeholder="e.g. 500">
+    </div>
+    <div class="form-group">
+      <label for="f-location">Location</label>
+      <input id="f-location" type="text" placeholder="e.g. Masaka">
+    </div>
+    <div class="form-group">
+      <label for="f-price">Price (UGX per kg)</label>
+      <input id="f-price" type="number" min="1" placeholder="e.g. 1200">
+    </div>
+    <div class="form-group">
+      <label for="f-contact">Contact phone</label>
+      <input id="f-contact" type="tel" placeholder="07XXXXXXXX">
+    </div>
+    <button class="primary-btn" onclick="addListing()">List Product</button>
+
+    <div class="section-label" style="margin-top:22px;">Your listings</div>
+    <div id="farmerListings"></div>
+  </div>
+
+  <!-- Search / Buyer screen -->
+  <div class="screen hidden" id="screen-search">
+    <h1 class="page-title">🛒 Find Crops</h1>
+    <p class="page-desc">Search by crop name to see quantity, price and the farmer's location.</p>
+    <div class="search-bar">
+      <input id="searchInput" type="text" placeholder="Search e.g. Maize" oninput="renderSearch()">
+      <button onclick="renderSearch()">Search</button>
+    </div>
+    <div id="searchResults"></div>
+  </div>
+
+  <!-- Market prices screen -->
+  <div class="screen hidden" id="screen-prices">
+    <h1 class="page-title">📊 Market Prices</h1>
+    <p class="page-desc">Indicative average prices reported across markets today (UGX per kg unless noted).</p>
+    <div class="board" id="priceBoard"></div>
+  </div>
+
+  <!-- Sales records screen -->
+  <div class="screen hidden" id="screen-records">
+    <h1 class="page-title">🧾 Sales Records</h1>
+    <p class="page-desc">Every purchase logged through Contact Farmer is recorded here.</p>
+    <div id="recordsList"></div>
+  </div>
+
+  <!-- Bottom nav -->
+  <div class="bottom-nav">
+    <button class="nav-btn active" data-tab="home" onclick="goTo('home')"><span class="icon">🏠</span>Home</button>
+    <button class="nav-btn" data-tab="farmer" onclick="goTo('farmer')"><span class="icon">👨‍🌾</span>Sell</button>
+    <button class="nav-btn" data-tab="search" onclick="goTo('search')"><span class="icon">🔍</span>Buy</button>
+    <button class="nav-btn" data-tab="prices" onclick="goTo('prices')"><span class="icon">📊</span>Prices</button>
+    <button class="nav-btn" data-tab="records" onclick="goTo('records')"><span class="icon">🧾</span>Records</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="agric.js"></script>
+</body>
+</html>
