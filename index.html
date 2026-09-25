@@ -50,7 +50,7 @@
       <h1 class="page-title" id="farmer-title">👨‍🌾 List a Product</h1>
       <p class="page-desc">Add your crop to the market. Buyers nearby will be able to find and contact you directly.</p>
 
-      <div class="form-group"><label for="f-crop">Crop</label><select id="f-crop"><option value="Maize">Maize</option><option value="Beans">Beans</option><option value="Coffee">Coffee</option><option value="Tomatoes">Tomatoes</option><option value="Bananas (Matooke)">Bananas (Matooke)</option><option value="Cassava">Cassava</option><option value="Other">Other</option></select></div>
+      <div class="form-group"><label for="f-crop">Crop</label><select id="f-crop"><option value="Maize">Maize</option><option value="Beans">Beans</option><option value="Coffee">Coffee</option><option value="Cassava">Cassava</option><option value="Matoke">Matoke</option><option value="Rice">Rice</option></select></div>
       <div class="form-group"><label for="f-qty">Quantity (kg)</label><input id="f-qty" type="number" min="1" step="1" inputmode="numeric" placeholder="e.g. 500"></div>
       <div class="form-group"><label for="f-location">Location</label><input id="f-location" type="text" autocomplete="address-level2" maxlength="80" placeholder="e.g. Masaka"></div>
       <div class="form-group"><label for="f-price">Price (UGX per kg)</label><input id="f-price" type="number" min="1" step="1" inputmode="numeric" placeholder="e.g. 1200"></div>
@@ -91,6 +91,8 @@
       <button type="button" class="nav-btn" data-tab="prices" onclick="goTo('prices')"><span class="icon" aria-hidden="true">📊</span>Prices</button>
       <button type="button" class="nav-btn" data-tab="records" onclick="goTo('records')"><span class="icon" aria-hidden="true">🧾</span>Records</button>
     </nav>
+
+    <footer class="app-footer">Designed by Matovu Jovan</footer>
   </main>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
