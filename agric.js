@@ -1,215 +1,130 @@
 /* ---------------- In-memory data (resets on page reload) ---------------- */
 let listings = [
-  {id:1, crop:"Maize", qty:500, unit:"kg", location:"Masaka", price:1200, contact:"0772 345 678", farmer:"Nakato Sarah"},
-  {id:2, crop:"Coffee", qty:200, unit:"kg", location:"Mukono", price:9500, contact:"0701 998 221", farmer:"Ssewanyana John"},
-  {id:3, crop:"Beans", qty:300, unit:"kg", location:"Mbarara", price:3200, contact:"0782 114 890", farmer:"Kwikiriza Grace"},
-  {id:4, crop:"Bananas (Matooke)", qty:150, unit:"bunches", location:"Kayunga", price:8000, contact:"0759 220 341", farmer:"Okello Peter"},
+  { id: 1, crop: 'Maize', qty: 500, unit: 'kg', location: 'Masaka', price: 1200, contact: '0772 345 678', farmer: 'Nakato Sarah' },
+  { id: 2, crop: 'Coffee', qty: 200, unit: 'kg', location: 'Mukono', price: 9500, contact: '0701 998 221', farmer: 'Ssewanyana John' },
+  { id: 3, crop: 'Beans', qty: 300, unit: 'kg', location: 'Mbarara', price: 3200, contact: '0782 114 890', farmer: 'Kwikiriza Grace' },
+  { id: 4, crop: 'Bananas (Matooke)', qty: 150, unit: 'bunches', location: 'Kayunga', price: 8000, contact: '0759 220 341', farmer: 'Okello Peter' }
 ];
-let salesRecords = [
-  {product:"Coffee", qty:"50 kg", price:"UGX 9,500/kg", buyer:"Kampala Exporters Ltd", date:"2026-08-20", farmer:"Ssewanyana John"},
-];
-let nextId = 5;
+let salesRecords = [{ product: 'Coffee', qty: '50 kg', price: 'UGX 9,500/kg', buyer: 'Kampala Exporters Ltd', date: '2026-08-20', farmer: 'Ssewanyana John' }];
+let nextId = listings.reduce((max, listing) => Math.max(max, listing.id), 0) + 1;
 
 const marketPrices = [
-  {crop:"Maize", icon:"🌽", price:"1,150 – 1,300", unit:"/kg", trend:"up"},
-  {crop:"Beans", icon:"🫘", price:"3,000 – 3,400", unit:"/kg", trend:"down"},
-  {crop:"Coffee (Kiboko)", icon:"☕", price:"9,000 – 9,800", unit:"/kg", trend:"up"},
-  {crop:"Tomatoes", icon:"🍅", price:"1,800 – 2,500", unit:"/kg", trend:"down"},
-  {crop:"Bananas (Matooke)", icon:"🍌", price:"7,500 – 9,000", unit:"/bunch", trend:"up"},
-  {crop:"Cassava", icon:"🥔", price:"900 – 1,100", unit:"/kg", trend:"flat"},
+  { crop: 'Maize', icon: '🌽', price: '1,150 – 1,300', unit: '/kg', trend: 'up' },
+  { crop: 'Beans', icon: '🫘', price: '3,000 – 3,400', unit: '/kg', trend: 'down' },
+  { crop: 'Coffee (Kiboko)', icon: '☕', price: '9,000 – 9,800', unit: '/kg', trend: 'up' },
+  { crop: 'Tomatoes', icon: '🍅', price: '1,800 – 2,500', unit: '/kg', trend: 'down' },
+  { crop: 'Bananas (Matooke)', icon: '🍌', price: '7,500 – 9,000', unit: '/bunch', trend: 'up' },
+  { crop: 'Cassava', icon: '🥔', price: '900 – 1,100', unit: '/kg', trend: 'flat' }
 ];
+const cropIcons = { Maize: '🌽', Beans: '🫘', Coffee: '☕', Tomatoes: '🍅', 'Bananas (Matooke)': '🍌', Cassava: '🥔', Other: '🌱' };
+const escapeHTML = value => String(value ?? '').replace(/[&<>'"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[char]));
+const formatNumber = value => Number(value).toLocaleString('en-UG');
 
-const cropIcons = {
-  "Maize":"🌽","Beans":"🫘","Coffee":"☕","Tomatoes":"🍅",
-  "Bananas (Matooke)":"🍌","Cassava":"🥔","Other":"🌱"
-};
-
-/* ---------------- Navigation ---------------- */
-function goTo(tab){
-  document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
-  document.getElementById('screen-' + tab).classList.remove('hidden');
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  document.querySelector('.nav-btn[data-tab="' + tab + '"]').classList.add('active');
+function goTo(tab) {
+  const target = document.getElementById(`screen-${tab}`);
+  const navButton = document.querySelector(`.nav-btn[data-tab="${tab}"]`);
+  if (!target || !navButton) return;
+  document.querySelectorAll('.screen').forEach(screen => screen.classList.add('hidden'));
+  target.classList.remove('hidden');
+  document.querySelectorAll('.nav-btn').forEach(button => button.classList.toggle('active', button === navButton));
   renderAll();
 }
 
-/* ---------------- Toast ---------------- */
-function showToast(msg){
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2200);
+let toastTimer;
+function showToast(message) {
+  const toast = document.getElementById('toast');
+  toast.textContent = message;
+  toast.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove('show'), 2200);
 }
 
-/* ---------------- Ticker ---------------- */
-function renderTicker(){
+function renderTicker() {
   const track = document.getElementById('tickerTrack');
-  const items = marketPrices.map(p => {
-    const arrow = p.trend === 'up' ? '<span class="up">▲</span>' : p.trend === 'down' ? '<span class="down">▼</span>' : '▬';
-    return <span class="ticker-item">${p.icon} ${p.crop} UGX ${p.price}${p.unit} ${arrow}</span>;
+  const items = marketPrices.map(price => {
+    const arrow = price.trend === 'up' ? '<span class="up">▲</span>' : price.trend === 'down' ? '<span class="down">▼</span>' : '<span>▬</span>';
+    return `<span class="ticker-item">${price.icon} ${escapeHTML(price.crop)} UGX ${escapeHTML(price.price)}${price.unit} ${arrow}</span>`;
   }).join('');
   track.innerHTML = items + items;
 }
 
-/* ---------------- Home ---------------- */
-function renderHome(){
+function renderHome() {
   document.getElementById('statListings').textContent = listings.length;
   document.getElementById('statSales').textContent = salesRecords.length;
+  document.getElementById('statCrops').textContent = new Set(listings.map(listing => listing.crop)).size;
   const recent = [...listings].slice(-3).reverse();
-  document.getElementById('homeListings').innerHTML = recent.map(listingCardHTML).join('') ||
-    emptyState('🌱', 'No listings yet. Be the first farmer to list a crop.');
+  document.getElementById('homeListings').innerHTML = recent.map(listingCardHTML).join('') || emptyState('🌱', 'No listings yet. Be the first farmer to list a crop.');
 }
 
-/* ---------------- Farmer screen ---------------- */
-function addListing(){
+function addListing() {
   const crop = document.getElementById('f-crop').value;
-  const qty = document.getElementById('f-qty').value.trim();
+  const qty = Number(document.getElementById('f-qty').value);
   const location = document.getElementById('f-location').value.trim();
-  const price = document.getElementById('f-price').value.trim();
+  const price = Number(document.getElementById('f-price').value);
   const contact = document.getElementById('f-contact').value.trim();
-
-  if(!qty || !location || !price || !contact){
-    showToast('Please fill in every field.');
+  if (!Number.isFinite(qty) || qty <= 0 || !location || !Number.isFinite(price) || price <= 0 || !contact) {
+    showToast('Enter a valid quantity, location, price and contact.');
     return;
   }
-
-  listings.push({
-    id: nextId++,
-    crop, qty: Number(qty), unit:"kg", location,
-    price: Number(price), contact, farmer:"You"
-  });
-
-  document.getElementById('f-qty').value='';
-  document.getElementById('f-location').value='';
-  document.getElementById('f-price').value='';
-  document.getElementById('f-contact').value='';
-
-  showToast('✅ ' + crop + ' listed successfully');
+  listings.push({ id: nextId++, crop, qty, unit: 'kg', location, price, contact, farmer: 'You' });
+  ['f-qty', 'f-location', 'f-price', 'f-contact'].forEach(id => { document.getElementById(id).value = ''; });
+  showToast(`✅ ${crop} listed successfully`);
   renderAll();
 }
 
-function removeListing(id){
-  listings = listings.filter(l => l.id !== id);
+function removeListing(id) {
+  listings = listings.filter(listing => listing.id !== id);
   showToast('Listing removed');
   renderAll();
 }
 
-function editListing(id){
-  const l = listings.find(x => x.id === id);
-  if(!l) return;
-  const newQty = prompt('Update quantity (kg):', l.qty);
-  if(newQty === null) return;
-  const newPrice = prompt('Update price (UGX/kg):', l.price);
-  if(newPrice === null) return;
-  l.qty = Number(newQty) || l.qty;
-  l.price = Number(newPrice) || l.price;
+function editListing(id) {
+  const listing = listings.find(item => item.id === id);
+  if (!listing) return;
+  const newQty = prompt('Update quantity (kg):', listing.qty);
+  if (newQty === null) return;
+  const newPrice = prompt('Update price (UGX/kg):', listing.price);
+  if (newPrice === null) return;
+  const qty = Number(newQty);
+  const price = Number(newPrice);
+  if (!Number.isFinite(qty) || qty <= 0 || !Number.isFinite(price) || price <= 0) { showToast('Enter positive numbers only.'); return; }
+  listing.qty = qty;
+  listing.price = price;
   showToast('Listing updated');
   renderAll();
 }
 
-function renderFarmerListings(){
-  const mine = listings.filter(l => l.farmer === "You");
-  document.getElementById('farmerListings').innerHTML = mine.map(l => `
+function renderFarmerListings() {
+  const mine = listings.filter(listing => listing.farmer === 'You');
+  document.getElementById('farmerListings').innerHTML = mine.map(listing => `
     <div class="listing-card">
-      <div style="display:flex; gap:12px; align-items:center;">
-        <div class="listing-icon">${cropIcons[l.crop] || '🌱'}</div>
-        <div class="listing-body">
-          <div class="listing-crop">${l.crop}</div>
-          <div class="listing-meta"><span>${l.qty} ${l.unit}</span><span>📍 ${l.location}</span></div>
-        </div>
-        <div class="listing-price">UGX ${l.price.toLocaleString()}/kg</div>
-      </div>
-      <div class="listing-actions">
-        <button onclick="editListing(${l.id})">Edit</button>
-        <button class="danger" onclick="removeListing(${l.id})">Remove</button>
-      </div>
-    </div>
-  `).join('') || emptyState('📋', "You haven't listed anything yet. Use the form above.");
+      <div style="display:flex; gap:12px; align-items:center;"><div class="listing-icon">${cropIcons[listing.crop] || '🌱'}</div><div class="listing-body"><div class="listing-crop">${escapeHTML(listing.crop)}</div><div class="listing-meta"><span>${formatNumber(listing.qty)} ${escapeHTML(listing.unit)}</span><span>📍 ${escapeHTML(listing.location)}</span></div></div><div class="listing-price">UGX ${formatNumber(listing.price)}/kg</div></div>
+      <div class="listing-actions"><button type="button" onclick="editListing(${listing.id})">Edit</button><button type="button" class="danger" onclick="removeListing(${listing.id})">Remove</button></div>
+    </div>`).join('') || emptyState('📋', "You haven't listed anything yet. Use the form above.");
 }
 
-/* ---------------- Search / Buyer screen ---------------- */
-function renderSearch(){
-  const q = (document.getElementById('searchInput')?.value || '').toLowerCase().trim();
-  const results = q ? listings.filter(l => l.crop.toLowerCase().includes(q)) : listings;
-  const box = document.getElementById('searchResults');
-  box.innerHTML = results.map(listingCardHTML).join('') ||
-    emptyState('🔍', 'No crops match "' + q + '". Try another search.');
+function renderSearch() {
+  const query = (document.getElementById('searchInput')?.value || '').toLowerCase().trim();
+  const results = query ? listings.filter(listing => listing.crop.toLowerCase().includes(query)) : listings;
+  document.getElementById('searchResults').innerHTML = results.map(listingCardHTML).join('') || emptyState('🔍', `No crops match "${query}". Try another search.`);
 }
 
-function contactFarmer(id){
-  const l = listings.find(x => x.id === id);
-  if(!l) return;
-  salesRecords.push({
-    product: l.crop,
-    qty: l.qty + ' ' + l.unit,
-    price: 'UGX ' + l.price.toLocaleString() + '/kg',
-    buyer: 'You',
-    date: new Date().toISOString().slice(0,10),
-    farmer: l.farmer
-  });
-  showToast('📞 Contacting ' + l.farmer + ' — ' + l.contact);
+function contactFarmer(id) {
+  const listing = listings.find(item => item.id === id);
+  if (!listing) return;
+  salesRecords.push({ product: listing.crop, qty: `${listing.qty} ${listing.unit}`, price: `UGX ${formatNumber(listing.price)}/kg`, buyer: 'You', date: new Date().toISOString().slice(0, 10), farmer: listing.farmer });
+  showToast(`📞 Contacting ${listing.farmer} — ${listing.contact}`);
   renderAll();
 }
 
-/* ---------------- Shared listing card ---------------- */
-function listingCardHTML(l){
-  return `
-    <div class="listing-card">
-      <div style="display:flex; gap:12px; align-items:center;">
-        <div class="listing-icon">${cropIcons[l.crop] || '🌱'}</div>
-        <div class="listing-body">
-          <div class="listing-crop">${l.crop}</div>
-          <div class="listing-meta"><span>${l.qty} ${l.unit}</span><span>📍 ${l.location}</span><span class="badge">${l.farmer}</span></div>
-        </div>
-        <div class="listing-price">UGX ${l.price.toLocaleString()}/kg</div>
-      </div>
-      <button class="contact-btn" onclick="contactFarmer(${l.id})">Contact Farmer — ${l.contact}</button>
-    </div>
-  `;
+function listingCardHTML(listing) {
+  return `<div class="listing-card"><div style="display:flex; gap:12px; align-items:center;"><div class="listing-icon">${cropIcons[listing.crop] || '🌱'}</div><div class="listing-body"><div class="listing-crop">${escapeHTML(listing.crop)}</div><div class="listing-meta"><span>${formatNumber(listing.qty)} ${escapeHTML(listing.unit)}</span><span>📍 ${escapeHTML(listing.location)}</span><span class="badge">${escapeHTML(listing.farmer)}</span></div></div><div class="listing-price">UGX ${formatNumber(listing.price)}/kg</div></div><button type="button" class="contact-btn" onclick="contactFarmer(${listing.id})">Contact Farmer — ${escapeHTML(listing.contact)}</button></div>`;
 }
 
-function emptyState(glyph, text){
-  return <div class="empty-state"><div class="glyph">${glyph}</div><p>${text}</p></div>;
-}
-
-/* ---------------- Market prices screen ---------------- */
-function renderPrices(){
-  document.getElementById('priceBoard').innerHTML = marketPrices.map(p => {
-    const trendHTML = p.trend === 'up' ? '<span class="trend-up">▲ rising</span>'
-      : p.trend === 'down' ? '<span class="trend-down">▼ falling</span>'
-      : '<span style="color:#B9B09A;">▬ steady</span>';
-    return `
-      <div class="price-row">
-        <div class="price-crop">${p.icon} ${p.crop}</div>
-        <div class="price-val">UGX ${p.price}${p.unit}<br><span class="price-trend">${trendHTML}</span></div>
-      </div>
-    `;
-  }).join('');
-}
-
-/* ---------------- Records screen ---------------- */
-function renderRecords(){
-  document.getElementById('recordsList').innerHTML = [...salesRecords].reverse().map(r => `
-    <div class="record-card">
-      <div class="record-top"><span>${r.product}</span><span class="badge">${r.date}</span></div>
-      <div class="record-grid">
-        <div>Quantity: <b>${r.qty}</b></div>
-        <div>Price: <b>${r.price}</b></div>
-        <div>Buyer: <b>${r.buyer}</b></div>
-        <div>Farmer: <b>${r.farmer}</b></div>
-      </div>
-    </div>
-  `).join('') || emptyState('🧾', 'No sales recorded yet.');
-}
-
-/* ---------------- Render everything ---------------- */
-function renderAll(){
-  renderHome();
-  renderFarmerListings();
-  renderSearch();
-  renderPrices();
-  renderRecords();
-}
+function emptyState(glyph, text) { return `<div class="empty-state"><div class="glyph" aria-hidden="true">${glyph}</div><p>${escapeHTML(text)}</p></div>`; }
+function renderPrices() { document.getElementById('priceBoard').innerHTML = marketPrices.map(price => { const trend = price.trend === 'up' ? '<span class="trend-up">▲ rising</span>' : price.trend === 'down' ? '<span class="trend-down">▼ falling</span>' : '<span style="color:#B9B09A;">▬ steady</span>'; return `<div class="price-row"><div class="price-crop">${price.icon} ${escapeHTML(price.crop)}</div><div class="price-val">UGX ${escapeHTML(price.price)}${price.unit}<br><span class="price-trend">${trend}</span></div></div>`; }).join(''); }
+function renderRecords() { document.getElementById('recordsList').innerHTML = [...salesRecords].reverse().map(record => `<div class="record-card"><div class="record-top"><span>${escapeHTML(record.product)}</span><span class="badge">${escapeHTML(record.date)}</span></div><div class="record-grid"><div>Quantity: <b>${escapeHTML(record.qty)}</b></div><div>Price: <b>${escapeHTML(record.price)}</b></div><div>Buyer: <b>${escapeHTML(record.buyer)}</b></div><div>Farmer: <b>${escapeHTML(record.farmer)}</b></div></div></div>`).join('') || emptyState('🧾', 'No sales recorded yet.'); }
+function renderAll() { renderHome(); renderFarmerListings(); renderSearch(); renderPrices(); renderRecords(); }
 
 renderTicker();
 renderAll();
